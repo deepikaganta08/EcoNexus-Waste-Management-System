@@ -11,23 +11,34 @@
 <section class="page-section"><div class="container"><div class="reuse-card form">
 <label data-i18n="itemPhoto">Waste / Item Photo</label>
 
-<div class="upload" onclick="document.getElementById('Photo').click()">
+<div class="upload" onclick="document.getElementById('t2tPhoto').click()">
     📷
     <br>
     <b>Choose Photo</b>
     <small>JPG / PNG / JPEG</small>
 </div>
 
-<input id="Photo"
-       name="photo"
-       type="file"
-       accept="image/*"
-       hidden
-       onchange="preview(this, 'Preview'); showReuseIdeas();">
+<input
+    id="t2tPhoto"
+    name="photo"
+    type="file"
+    accept="image/*"
+    hidden
+    onchange="preview(this, 't2tPreview')"
+>
 
-<img id="Preview" class="preview" alt="Selected waste photo"><button class="btn primary full"
-        onclick="showReuseIdeas()"
+<img id="t2tPreview" class="preview" alt="Selected waste photo">
+
+<button class="btn primary full"
+        onclick="analyzeT2TWaste()"
         data-i18n="findIdeas">
-    Find reuse ideas
-</button><div id="reuseResult" class="reuse-result"><h2 data-i18n="valueTitle">Give your waste a second life.</h2><p data-i18n="valueText">Choose a photo to get practical reuse ideas.</p></div><div class="reuse-options"><div class="mini-card"><div class="service-icon">🧴</div><span class="badge">PLASTIC</span><h3 data-i18n="planter">Self-watering planter</h3><p data-i18n="planterText">Reuse clean bottles for herbs or plants.</p><button class="btn secondary save-idea" data-idea="Self-watering planter" data-i18n="saveIdea">Save idea</button></div><div class="mini-card"><div class="service-icon">📦</div><span class="badge">CARDBOARD</span><h3 data-i18n="organizer">Desk organizer</h3><p data-i18n="organizerText">Turn suitable packaging into a stationery tray.</p><button class="btn secondary save-idea" data-idea="Cardboard desk organizer" data-i18n="saveIdea">Save idea</button></div><div class="mini-card"><div class="service-icon">👕</div><span class="badge">TEXTILE</span><h3 data-i18n="cloth">Cleaning cloth</h3><p data-i18n="clothText">Repurpose suitable cotton fabric for cleaning.</p><button class="btn secondary save-idea" data-idea="Textile cleaning cloth" data-i18n="saveIdea">Save idea</button></div></div></div></div></section></main>
+    Find reuse ideas →
+</button>
+
+<a class="btn primary full" href="ai-guide.html">
+    AI Waste Guide
+</a>
+
+<div id="t2tDetectionResult"></div>
+<div id="reuseResult" class="reuse-result"><h2 data-i18n="valueTitle">Give your waste a second life.</h2><p data-i18n="valueText">Choose a photo to get practical reuse ideas.</p></div><div class="reuse-options"><div class="mini-card"><div class="service-icon">🧴</div><span class="badge">PLASTIC</span><h3 data-i18n="planter">Self-watering planter</h3><p data-i18n="planterText">Reuse clean bottles for herbs or plants.</p><button class="btn secondary save-idea" data-idea="Self-watering planter" data-i18n="saveIdea">Save idea</button></div><div class="mini-card"><div class="service-icon">📦</div><span class="badge">CARDBOARD</span><h3 data-i18n="organizer">Desk organizer</h3><p data-i18n="organizerText">Turn suitable packaging into a stationery tray.</p><button class="btn secondary save-idea" data-idea="Cardboard desk organizer" data-i18n="saveIdea">Save idea</button></div><div class="mini-card"><div class="service-icon">👕</div><span class="badge">TEXTILE</span><h3 data-i18n="cloth">Cleaning cloth</h3><p data-i18n="clothText">Repurpose suitable cotton fabric for cleaning.</p><button class="btn secondary save-idea" data-idea="Textile cleaning cloth" data-i18n="saveIdea">Save idea</button></div></div></div></div></section></main>
 <footer><b>EcoNexus</b><span data-i18n="footer"> Clean & Green Technology</span></footer><div id="toast" class="toast"></div><script src="app.js"></script></body></html>
