@@ -15,7 +15,119 @@ function preview(input,target){const f=input.files?.[0];const img=document.getEl
 function getRealGPS(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Geolocation is not supported by this browser.'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
 async function useGPS(target='location',coordsTarget='gpsResult'){const btn=event?.currentTarget;if(btn){btn.disabled=true;btn.textContent='Getting precise location…'}try{const p=await getRealGPS();const text=`Latitude: ${p.coords.latitude.toFixed(6)}, Longitude: ${p.coords.longitude.toFixed(6)} • Accuracy: ${Math.round(p.coords.accuracy)} m`;const input=document.getElementById(target);if(input)input.value=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`;const box=document.getElementById(coordsTarget);if(box)box.textContent=text;const gps=document.getElementById('gpsCaptured');if(gps)gps.value='1';const pin=document.getElementById('realPin');if(pin){pin.style.left=(20+(Math.abs(p.coords.longitude)%60))%80+'%';pin.style.top=(20+(Math.abs(p.coords.latitude)%55))%65+'%'}toast('Real device location captured');}catch(e){const box=document.getElementById(coordsTarget);if(box)box.textContent=e.code===1?'Location permission was denied. Enter the location manually.':'Unable to obtain location. Check browser location permission and try again.';toast('Could not capture location');}finally{if(btn){btn.disabled=false;btn.textContent='📍 Use my real GPS'}}}
 function submitReport(form,type){const gps=document.getElementById('gpsCaptured');if(gps&&gps.value!=='1'){toast('Please capture your real GPS location first');return}const fd=new FormData(form);const r=getReports();const id='ENX-2026-'+String(4822+r.length).padStart(6,'0');const report={id,type,category:fd.get('category')||fd.get('issue')||'Other',location:fd.get('location')||'Location not provided',severity:fd.get('severity')||'Medium',status:'Reported',date:new Date().toISOString().slice(0,10),description:fd.get('description')||''};r.unshift(report);saveReports(r);localStorage.setItem('econexus_last_report',id);toast(`Report submitted: ${id}`);setTimeout(()=>location.href='tracking.html?id='+encodeURIComponent(id),700)}
-function analyzeWaste(){const file=document.getElementById('aiFile')?.files?.[0];if(!file){toast('Choose a waste photo first');return}const name=file.name.toLowerCase();let x={object:'Mixed dry material',category:'Dry / Recyclable',bin:'BLUE',confidence:91,reason:'Likely recyclable dry material. Keep it clean and dry.',action:'Separate clean recyclable material from wet waste.'};if(/food|fruit|vegetable|wet|organic/.test(name))x={object:'Organic waste',category:'Wet / Organic',bin:'GREEN',confidence:94,reason:'Likely biodegradable organic waste.',action:'Place in the wet/organic stream and avoid mixing with plastics.'};else if(/battery|chemical|medical|ewaste|e-waste/.test(name))x={object:'Special / E-waste',category:'Hazardous / Special',bin:'RED',confidence:88,reason:'Special handling is required. Do not mix with regular waste.',action:'Use an authorized collection point and keep hazardous items separate.'};else if(/plastic|bottle|pet/.test(name))x={object:'PET Plastic Bottle',category:'Plastic / Recyclable',bin:'BLUE',confidence:96,reason:'Likely recyclable PET plastic. Empty and keep it clean and dry.',action:'Empty → rinse if appropriate → separate → send to recyclable collection.'};document.getElementById('result').innerHTML=`<div class="eyebrow" style="color:#baf36a">AI CLASSIFICATION • DEMO</div><h2>${esc(x.object)}</h2><p>${esc(x.reason)}</p><div class="bar"><i style="width:${x.confidence}%"></i></div><p>${x.confidence}% suggested confidence</p><div class="card" style="margin-top:18px;background:#0d3428;border-color:#426957"><small>RECOMMENDED STREAM</small><h2 style="color:#baf36a">${x.bin}</h2><p>${esc(x.action)}</p><span class="badge">Prototype AI result</span></div>`;localStorage.setItem('econexus_last_ai',JSON.stringify(x));toast('Waste analysis complete')}
+function analyzeWaste(){
+    const file=document.getElementById('aiFile')?.files?.[0];
+
+    if(!file){
+        toast('Choose a waste photo first');
+        return;
+    }
+
+    const name=file.name.toLowerCase();
+
+    let x={
+        object:'Dry Waste',
+        category:'Dry Waste',
+        bin:'BLUE',
+        confidence:90,
+        reason:'This appears to be dry recyclable waste such as paper, plastic, glass, metal, wood or rubber.',
+        action:'Keep it clean and dry. Separate it from wet, sanitary and special care waste and send it to the dry-waste collection stream.'
+    };
+
+    /* 1. WET WASTE */
+    if(/food|fruit|vegetable|veg|organic|wet|kitchen|peel|meat|fish|flower|leaf|leaves|garden|compost/.test(name)){
+
+        x={
+            object:'Wet Waste',
+            category:'Wet Waste',
+            bin:'GREEN',
+            confidence:94,
+            reason:'This appears to be biodegradable organic waste such as food, vegetables, fruit peels, flowers or garden waste.',
+            action:'Place it in the wet-waste stream for composting or bio-methanation. Do not mix it with dry or special-care waste.'
+        };
+
+    }
+
+    /* 2. SANITARY WASTE */
+    else if(/diaper|nappy|sanitary|pad|menstrual|tampon|condom|tissue|used.?tissue|bandage|soiled|napkin/.test(name)){
+
+        x={
+            object:'Sanitary Waste',
+            category:'Sanitary Waste',
+            bin:'SANITARY',
+            confidence:93,
+            reason:'This appears to be sanitary waste such as a used diaper, sanitary pad, tampon, condom or soiled sanitary material.',
+            action:'Wrap the sanitary waste securely and keep it separate from wet and dry waste before handing it to the authorised waste collector.'
+        };
+
+    }
+
+    /* 3. SPECIAL CARE WASTE */
+    else if(/battery|chemical|medicine|medical|tablet|capsule|syringe|bulb|mercury|thermometer|paint|pesticide|acid|solvent|e.?waste|electronic|charger|mobile|laptop|circuit|wire|adapter/.test(name)){
+
+        x={
+            object:'Special Care Waste',
+            category:'Special Care Waste',
+            bin:'SPECIAL',
+            confidence:91,
+            reason:'This appears to require special handling, such as batteries, medicines, bulbs, mercury items, paint containers, chemicals or electronic waste.',
+            action:'Do not mix it with regular household waste. Keep it separate and hand it over to an authorised collection point or agency.'
+        };
+
+    }
+
+    /* 4. DRY WASTE */
+    else if(/plastic|bottle|pet|paper|cardboard|carton|newspaper|magazine|glass|metal|can|tin|aluminium|steel|wood|rubber|packaging|wrapper|box/.test(name)){
+
+        x={
+            object:'Dry Waste',
+            category:'Dry Waste',
+            bin:'BLUE',
+            confidence:95,
+            reason:'This appears to be dry recyclable material such as plastic, paper, cardboard, glass or metal.',
+            action:'Keep it clean and dry. Separate it from wet, sanitary and special-care waste and send it for recycling.'
+        };
+    }
+
+    document.getElementById('result').innerHTML=`
+        <div class="eyebrow" style="color:#baf36a">
+            AI CLASSIFICATION • SWM 2026
+        </div>
+
+        <h2>${esc(x.object)}</h2>
+
+        <p>${esc(x.reason)}</p>
+
+        <div class="bar">
+            <i style="width:${x.confidence}%"></i>
+        </div>
+
+        <p>${x.confidence}% suggested confidence</p>
+
+        <div class="card"
+             style="margin-top:18px;background:#0d3428;border-color:#426957">
+
+            <small>RECOMMENDED WASTE STREAM</small>
+
+            <h2 style="color:#baf36a">
+                ${esc(x.bin)}
+            </h2>
+
+            <p>${esc(x.action)}</p>
+
+            <span class="badge">
+                Prototype AI result
+            </span>
+        </div>
+    `;
+
+    localStorage.setItem(
+        'econexus_last_ai',
+        JSON.stringify(x)
+    );
+
+    toast('Waste analysis complete');
+}
 function renderTracking(){const el=document.getElementById('trackingList');if(!el)return;const reports=getReports();const id=new URLSearchParams(location.search).get('id');const shown=id?reports.filter(r=>r.id===id):reports;el.innerHTML=shown.length?shown.map(r=>`<div class="card"><div class="eyebrow">${esc(r.type)} REPORT</div><h3>${esc(r.id)}</h3><p><b>${esc(r.category)}</b> • ${esc(r.location)}</p><span class="status">${esc(r.status)}</span><p>${esc(r.description)}</p><div class="timeline"><div class="timeline-item active"><span class="circle">✓</span><div><b>Reported</b><br><small>Evidence and location captured</small></div></div><div class="timeline-item ${['Assigned','In Progress','Resolved'].includes(r.status)?'active':''}"><span class="circle">2</span><div><b>Assigned</b><br><small>Nearest eligible team notified</small></div></div><div class="timeline-item ${['In Progress','Resolved'].includes(r.status)?'active':''}"><span class="circle">3</span><div><b>In Progress</b><br><small>Action underway</small></div></div><div class="timeline-item ${r.status==='Resolved'?'active':''}"><span class="circle">4</span><div><b>Resolved</b><br><small>Closure recorded</small></div></div></div></div>`).join(''):'<div class="card empty">No reports found.</div>'}
 function renderAdmin(){const body=document.getElementById('adminRows');if(!body)return;const reports=getReports();body.innerHTML=reports.map((r,i)=>`<tr><td>${esc(r.id)}</td><td>${esc(r.type)} / ${esc(r.category)}</td><td>${esc(r.location)}</td><td>${esc(r.severity)}</td><td><select data-i="${i}" class="adminStatus"><option ${r.status==='Reported'?'selected':''}>Reported</option><option ${r.status==='Assigned'?'selected':''}>Assigned</option><option ${r.status==='In Progress'?'selected':''}>In Progress</option><option ${r.status==='Resolved'?'selected':''}>Resolved</option></select></td></tr>`).join('');document.querySelectorAll('.adminStatus').forEach(s=>s.onchange=()=>{const r=getReports();r[+s.dataset.i].status=s.value;saveReports(r);renderAdmin();toast('Report status updated')});document.getElementById('adminTotal').textContent=reports.length;document.getElementById('adminOpen').textContent=reports.filter(x=>x.status!=='Resolved').length;document.getElementById('adminProgress').textContent=reports.filter(x=>x.status==='In Progress').length;document.getElementById('adminResolved').textContent=reports.filter(x=>x.status==='Resolved').length}
 function initDashboard(){const r=getReports();const e=id=>document.getElementById(id);if(!e('reportCount'))return;e('reportCount').textContent=r.length;e('resolvedCount').textContent=r.filter(x=>x.status==='Resolved').length;e('ecoPoints').textContent=420+r.length*20;e('diverted').textContent=(23+r.length*1.7).toFixed(1)+' kg';const a=e('recentActivity');a.innerHTML=r.slice(0,4).map(x=>`<div class="timeline-item active"><span class="circle">✓</span><div><b>${esc(x.id)}</b><br><small>${esc(x.status)} • ${esc(x.category)}</small></div></div>`).join('')}
