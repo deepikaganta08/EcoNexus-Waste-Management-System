@@ -18,19 +18,18 @@
     <small>JPG / PNG / JPEG</small>
 </div>
 
-<input
-    id="t2tPhoto"
-    name="photo"
-    type="file"
-    accept="image/*"
-    hidden
-    onchange="preview(this, 't2tPreview')"
->
+<input id="t2tPhoto"
+       type="file"
+       accept="image/*"
+       hidden
+       onchange="preview(this,'t2tPreview')">
 
-<img id="t2tPreview" class="preview" alt="Selected waste photo">
+<img id="t2tPreview"
+     class="preview"
+     alt="Selected waste photo">
 
 <button class="btn primary full"
-        onclick="analyzeT2TWaste()"
+        onclick="analyzeWaste()"
         data-i18n="findIdeas">
     Find reuse ideas →
 </button>
