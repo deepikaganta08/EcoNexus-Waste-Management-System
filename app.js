@@ -16,12 +16,16 @@ function getRealGPS(){return new Promise((resolve,reject)=>{if(!navigator.geoloc
 async function useGPS(target='location',coordsTarget='gpsResult'){const btn=event?.currentTarget;if(btn){btn.disabled=true;btn.textContent='Getting precise location…'}try{const p=await getRealGPS();const text=`Latitude: ${p.coords.latitude.toFixed(6)}, Longitude: ${p.coords.longitude.toFixed(6)} • Accuracy: ${Math.round(p.coords.accuracy)} m`;const input=document.getElementById(target);if(input)input.value=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`;const box=document.getElementById(coordsTarget);if(box)box.textContent=text;const gps=document.getElementById('gpsCaptured');if(gps)gps.value='1';const pin=document.getElementById('realPin');if(pin){pin.style.left=(20+(Math.abs(p.coords.longitude)%60))%80+'%';pin.style.top=(20+(Math.abs(p.coords.latitude)%55))%65+'%'}toast('Real device location captured');}catch(e){const box=document.getElementById(coordsTarget);if(box)box.textContent=e.code===1?'Location permission was denied. Enter the location manually.':'Unable to obtain location. Check browser location permission and try again.';toast('Could not capture location');}finally{if(btn){btn.disabled=false;btn.textContent='📍 Use my real GPS'}}}
 function submitReport(form,type){const gps=document.getElementById('gpsCaptured');if(gps&&gps.value!=='1'){toast('Please capture your real GPS location first');return}const fd=new FormData(form);const r=getReports();const id='ENX-2026-'+String(4822+r.length).padStart(6,'0');const report={id,type,category:fd.get('category')||fd.get('issue')||'Other',location:fd.get('location')||'Location not provided',severity:fd.get('severity')||'Medium',status:'Reported',date:new Date().toISOString().slice(0,10),description:fd.get('description')||''};r.unshift(report);saveReports(r);localStorage.setItem('econexus_last_report',id);toast(`Report submitted: ${id}`);setTimeout(()=>location.href='tracking.html?id='+encodeURIComponent(id),700)}
 function analyzeWaste(){
-    const file=document.getElementById('aiFile')?.files?.[0];
+    const file =
+        document.getElementById('aiFile')?.files?.[0] ||
+        document.getElementById('t2tPhoto')?.files?.[0];
 
     if(!file){
         toast('Choose a waste photo first');
         return;
     }
+
+    const isT2T = !!document.getElementById('t2tPhoto')?.files?.[0];
 
     const name=file.name.toLowerCase();
 
